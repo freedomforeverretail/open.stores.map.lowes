@@ -270,10 +270,20 @@
                     setStores(parsedStores);
                     setLastUpdated(new Date());
 
-                    // Add markers to map if map is loaded
-                    if (mapLoaded) {
-                        addMarkersToMap(parsedStores);
-                    }
+                    // Add markers to map - try immediately
+                    console.log('📍 About to add markers, mapLoaded:', mapLoaded);
+                    console.log('📍 map object exists:', !!map);
+                    console.log('📍 window.google exists:', !!window.google);
+                    
+                    // Try adding markers with a small delay to ensure map is ready
+                    setTimeout(() => {
+                        console.log('📍 Delayed marker add - map:', !!map, 'google:', !!window.google);
+                        if (map && window.google) {
+                            addMarkersToMap(parsedStores);
+                        } else {
+                            console.error('❌ Map or Google not ready after delay');
+                        }
+                    }, 1000);
                     
                 } catch (err) {
                     console.error('❌ Error fetching data:', err);
