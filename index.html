@@ -77,11 +77,18 @@
             const [mapLoaded, setMapLoaded] = useState(false);
 
             const initializeMap = () => {
+                console.log('🔧 initializeMap called');
+                console.log('🔧 window.google:', window.google);
+                console.log('🔧 window.google?.maps?.Map:', window.google?.maps?.Map);
+                console.log('🔧 mapRef.current:', mapRef.current);
+                
                 if (!window.google?.maps?.Map || !mapRef.current) {
+                    console.log('❌ Cannot initialize - missing google maps or mapRef');
                     return false;
                 }
 
                 try {
+                    console.log('🔧 Creating new Google Map...');
                     map = new window.google.maps.Map(mapRef.current, {
                         zoom: 4,
                         center: { lat: 39.8283, lng: -98.5795 }, // Center of US
@@ -156,6 +163,10 @@
             };
 
             const addMarkersToMap = (storeData) => {
+                console.log('🔧 addMarkersToMap called with', storeData.length, 'stores');
+                console.log('🔧 map:', map);
+                console.log('🔧 window.google:', window.google);
+                
                 if (!map || !window.google) {
                     console.log('❌ Cannot add markers - map or google not available');
                     return;
@@ -413,8 +424,15 @@
 
             // Update markers when filteredStores changes
             useEffect(() => {
+                console.log('🔧 Markers useEffect triggered');
+                console.log('🔧 mapLoaded:', mapLoaded);
+                console.log('🔧 filteredStores.length:', filteredStores.length);
+                
                 if (mapLoaded && filteredStores.length > 0) {
+                    console.log('🔧 Calling addMarkersToMap...');
                     addMarkersToMap(filteredStores);
+                } else {
+                    console.log('❌ Not calling addMarkersToMap - conditions not met');
                 }
             }, [mapLoaded, filteredStores]);
 
