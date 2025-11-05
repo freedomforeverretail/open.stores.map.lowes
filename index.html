@@ -1,661 +1,670 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lowe's Open Stores Map</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Maps JavaScript API -->
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBHcVkUgYLoJnNKpTecRUpAyMHU-T8HqFY&loading=async&callback=initMap"></script>
-    <style>
-        body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
-        #map { height: 100%; width: 100%; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lowe's Open Stores Map</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Google Maps JavaScript API -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBHcVkUgYLoJnNKpTecRUpAyMHU-T8HqFY&loading=async&callback=initMap"></script>
+<style>
+body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+#map { height: 100%; width: 100%; }
+</style>
 </head>
 <body>
-    <div id="root"></div>
+<div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useMemo, useRef } = React;
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef } = React;
 
-        // Configuration
-        const CONFIG = {
-            SHEET_ID: '15-3D__vkaQNRPCbWCrlFuysHiifAiGQ_SRo6qa23TQA',
-            SHEET_NAME: 'sunly_lowes_list',
-            API_KEY: 'AIzaSyBHcVkUgYLoJnNKpTecRUpAyMHU-T8HqFY',
-            REFRESH_MINUTES: 3,
-            RESERVE_URL: 'https://docs.google.com/forms/d/1J-k2MCZGICA1o4oz3rL5-Iz7kauqRi_JVi01pwP8-q8/viewform'
-        };
+// Configuration
+const CONFIG = {
+SHEET_ID: '15-3D__vkaQNRPCbWCrlFuysHiifAiGQ_SRo6qa23TQA',
+SHEET_NAME: 'sunly_lowes_list',
+API_KEY: 'AIzaSyBHcVkUgYLoJnNKpTecRUpAyMHU-T8HqFY',
+REFRESH_MINUTES: 3,
+RESERVE_URL: 'https://docs.google.com/forms/d/1J-k2MCZGICA1o4oz3rL5-Iz7kauqRi_JVi01pwP8-q8/viewform'
+};
 
-        // Global variables for Google Maps
-        let map = null;
-        let markers = [];
+// Global variables for Google Maps
+let map = null;
+let markers = [];
 
-        // Enhanced icons
-        const Search = ({ className }) => (
-            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-        );
+// Enhanced icons
+const Search = ({ className }) => (
+<svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+</svg>
+);
 
-        const Loader = ({ className }) => (
-            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-        );
+const Loader = ({ className }) => (
+<svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+</svg>
+);
 
-        const RefreshCw = ({ className }) => (
-            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M1 4v6h6M23 20v-6h-6" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15" />
-            </svg>
-        );
+const RefreshCw = ({ className }) => (
+<svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M1 4v6h6M23 20v-6h-6" />
+<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15" />
+</svg>
+);
 
-        const AlertCircle = ({ className }) => (
-            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-        );
+const AlertCircle = ({ className }) => (
+<svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+</svg>
+);
 
-        // Initialize Google Map callback
-        window.initMap = function() {
-            console.log('✅ Google Maps API loaded successfully for Lowe\'s Open Stores Map');
-        };
+// Initialize Google Map callback
+window.initMap = function() {
+console.log('✅ Google Maps API loaded successfully for Lowe\'s Open Stores Map');
+};
 
-        const LowesOpenStoresMap = () => {
-            const [stores, setStores] = useState([]);
-            const [loading, setLoading] = useState(true);
-            const [error, setError] = useState('');
-            const [lastUpdated, setLastUpdated] = useState(null);
-            const [searchTerm, setSearchTerm] = useState('');
-            const [stateFilter, setStateFilter] = useState('all');
-            const [selectedStore, setSelectedStore] = useState(null);
-            const mapRef = useRef(null);
-            const [mapLoaded, setMapLoaded] = useState(false);
+const LowesOpenStoresMap = () => {
+const [stores, setStores] = useState([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState('');
+const [lastUpdated, setLastUpdated] = useState(null);
+const [searchTerm, setSearchTerm] = useState('');
+const [stateFilter, setStateFilter] = useState('all');
+const [selectedStore, setSelectedStore] = useState(null);
+const mapRef = useRef(null);
+const [mapLoaded, setMapLoaded] = useState(false);
 
-            const initializeMap = () => {
-                console.log('🔧 initializeMap called');
-                console.log('🔧 window.google:', window.google);
-                console.log('🔧 window.google?.maps?.Map:', window.google?.maps?.Map);
-                console.log('🔧 mapRef.current:', mapRef.current);
-                
-                if (!window.google?.maps?.Map || !mapRef.current) {
-                    console.log('❌ Cannot initialize - missing google maps or mapRef');
-                    return false;
-                }
+const initializeMap = () => {
+console.log('🔧 initializeMap called');
+console.log('🔧 window.google:', window.google);
+console.log('🔧 window.google?.maps?.Map:', window.google?.maps?.Map);
+console.log('🔧 mapRef.current:', mapRef.current);
 
-                try {
-                    console.log('🔧 Creating new Google Map...');
-                    map = new window.google.maps.Map(mapRef.current, {
-                        zoom: 4,
-                        center: { lat: 39.8283, lng: -98.5795 }, // Center of US
-                        mapTypeId: 'roadmap',
-                        restriction: {
-                            latLngBounds: {
-                                north: 49.0,
-                                south: 25.0,
-                                west: -125.0,
-                                east: -66.0,
-                            },
-                            strictBounds: false,
-                        },
-                        styles: [
-                            {
-                                featureType: 'poi',
-                                elementType: 'labels',
-                                stylers: [{ visibility: 'off' }]
-                            },
-                            {
-                                featureType: 'road',
-                                elementType: 'labels',
-                                stylers: [{ visibility: 'off' }]
-                            },
-                            {
-                                featureType: 'road.local',
-                                elementType: 'geometry',
-                                stylers: [{ visibility: 'off' }]
-                            },
-                            {
-                                featureType: 'road.arterial',
-                                elementType: 'geometry',
-                                stylers: [{ lightness: 20 }]
-                            },
-                            {
-                                featureType: 'water',
-                                elementType: 'labels',
-                                stylers: [{ visibility: 'off' }]
-                            },
-                            {
-                                featureType: 'administrative.locality',
-                                elementType: 'labels',
-                                stylers: [{ visibility: 'off' }]
-                            },
-                            {
-                                featureType: 'landscape',
-                                elementType: 'labels',
-                                stylers: [{ visibility: 'off' }]
-                            },
-                            {
-                                featureType: 'administrative.province',
-                                elementType: 'geometry.stroke',
-                                stylers: [{ color: '#999999', weight: 1 }]
-                            },
-                            {
-                                featureType: 'transit',
-                                elementType: 'all',
-                                stylers: [{ visibility: 'off' }]
-                            }
-                        ],
-                        streetViewControl: false,
-                        fullscreenControl: false,
-                        mapTypeControl: false
-                    });
+if (!window.google?.maps?.Map || !mapRef.current) {
+console.log('❌ Cannot initialize - missing google maps or mapRef');
+return false;
+}
 
-                    setMapLoaded(true);
-                    return true;
-                } catch (error) {
-                    console.error('❌ Error initializing map:', error);
-                    return false;
-                }
-            };
+try {
+console.log('🔧 Creating new Google Map...');
+map = new window.google.maps.Map(mapRef.current, {
+zoom: 4,
+center: { lat: 39.8283, lng: -98.5795 }, // Center of US
+mapTypeId: 'roadmap',
+restriction: {
+latLngBounds: {
+north: 49.0,
+south: 25.0,
+west: -125.0,
+east: -66.0,
+},
+strictBounds: false,
+},
+styles: [
+{
+featureType: 'poi',
+elementType: 'labels',
+stylers: [{ visibility: 'off' }]
+},
+{
+featureType: 'road',
+elementType: 'labels',
+stylers: [{ visibility: 'off' }]
+},
+{
+featureType: 'road.local',
+elementType: 'geometry',
+stylers: [{ visibility: 'off' }]
+},
+{
+featureType: 'road.arterial',
+elementType: 'geometry',
+stylers: [{ lightness: 20 }]
+},
+{
+featureType: 'water',
+elementType: 'labels',
+stylers: [{ visibility: 'off' }]
+},
+{
+featureType: 'administrative.locality',
+elementType: 'labels',
+stylers: [{ visibility: 'off' }]
+},
+{
+featureType: 'landscape',
+elementType: 'labels',
+stylers: [{ visibility: 'off' }]
+},
+{
+featureType: 'administrative.province',
+elementType: 'geometry.stroke',
+stylers: [{ color: '#999999', weight: 1 }]
+},
+{
+featureType: 'transit',
+elementType: 'all',
+stylers: [{ visibility: 'off' }]
+}
+],
+streetViewControl: false,
+fullscreenControl: false,
+mapTypeControl: false
+});
 
-            const addMarkersToMap = (storeData) => {
-                console.log('🔧 addMarkersToMap called with', storeData.length, 'stores');
-                console.log('🔧 map:', map);
-                console.log('🔧 window.google:', window.google);
-                
-                if (!map || !window.google) {
-                    console.log('❌ Cannot add markers - map or google not available');
-                    return;
-                }
+setMapLoaded(true);
+return true;
+} catch (error) {
+console.error('❌ Error initializing map:', error);
+return false;
+}
+};
 
-                console.log('🗺️ Adding markers for', storeData.length, 'stores');
+const addMarkersToMap = (storeData) => {
+console.log('🔧 addMarkersToMap called with', storeData.length, 'stores');
+console.log('🔧 map:', map);
+console.log('🔧 window.google:', window.google);
 
-                // Clear existing markers
-                markers.forEach(marker => marker.setMap(null));
-                markers = [];
+if (!map || !window.google) {
+console.log('❌ Cannot add markers - map or google not available');
+return;
+}
 
-                // Add new markers for OPEN stores only
-                storeData.forEach((store, index) => {
-                    console.log(`🔷 Creating marker ${index + 1}:`, {
-                        name: store.storeName,
-                        lat: store.latitude,
-                        lng: store.longitude
-                    });
-                    
-                    const marker = new window.google.maps.Marker({
-                        position: { lat: store.latitude, lng: store.longitude },
-                        map: map,
-                        title: `${store.storeName} - OPEN`,
-                        icon: {
-                            path: window.google.maps.SymbolPath.CIRCLE,
-                            fillColor: '#2C5134',
-                            fillOpacity: 1,
-                            strokeColor: '#ffffff',
-                            strokeWeight: 1,
-                            scale: 5
-                        }
-                    });
+console.log('🗺️ Adding markers for', storeData.length, 'stores');
 
-                    // Add click listener for side panel
-                    marker.addListener('click', () => {
-                        console.log('🎯 Marker clicked - Setting selected store:', {
-                            storeName: store.storeName,
-                            storeNumber: store.storeNumber,
-                            city: store.city,
-                            state: store.state,
-                            fullStore: store
-                        });
-                        
-                        setSelectedStore(store);
-                    });
+// Clear existing markers
+markers.forEach(marker => marker.setMap(null));
+markers = [];
 
-                    markers.push(marker);
-                });
+// Add new markers for OPEN stores only
+storeData.forEach((store, index) => {
+console.log(`🔷 Creating marker ${index + 1}:`, {
+name: store.storeName,
+lat: store.latitude,
+lng: store.longitude
+});
 
-                console.log('🎯 Total markers created:', markers.length);
-                
-                // Fit map to show all open stores
-                if (markers.length > 0) {
-                    const bounds = new window.google.maps.LatLngBounds();
-                    markers.forEach(marker => bounds.extend(marker.getPosition()));
-                    
-                    map.fitBounds(bounds);
-                    console.log('📐 Map bounds fitted to markers');
-                } else {
-                    console.log('❌ No markers to fit bounds to');
-                }
-            };
+const marker = new window.google.maps.Marker({
+position: { lat: store.latitude, lng: store.longitude },
+map: map,
+title: `${store.storeName} - OPEN`,
+icon: {
+path: window.google.maps.SymbolPath.CIRCLE,
+fillColor: '#2C5134',
+fillOpacity: 1,
+strokeColor: '#ffffff',
+strokeWeight: 1,
+scale: 5
+}
+});
 
-            const fetchFromGoogleSheets = async () => {
-                try {
-                    setLoading(true);
-                    setError('');
+// Add click listener for side panel
+marker.addListener('click', () => {
+console.log('🎯 Marker clicked - Setting selected store:', {
+storeName: store.storeName,
+storeNumber: store.storeNumber,
+city: store.city,
+state: store.state,
+fullStore: store
+});
 
-                    const encodedSheetName = encodeURIComponent(CONFIG.SHEET_NAME);
-                    let url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${encodedSheetName}?key=${CONFIG.API_KEY}`;
-                    
-                    console.log('🔍 Fetching from URL:', url);
-                    
-                    let response = await fetch(url);
-                    
-                    // If that fails, try without sheet name (gets first sheet)
-                    if (!response.ok) {
-                        console.log('❌ First attempt failed, trying without sheet name...');
-                        url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/A:Z?key=${CONFIG.API_KEY}`;
-                        console.log('🔍 Trying URL:', url);
-                        response = await fetch(url);
-                    }
-                    
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        console.log('❌ API Error:', errorData);
-                        throw new Error(`Google Sheets API error: ${response.status} - ${errorData.error?.message || response.statusText}`);
-                    }
-                    
-                    const data = await response.json();
-                    console.log('📊 Raw data received:', data);
-                    
-                    if (!data.values || data.values.length === 0) {
-                        throw new Error('No data found in the specified sheet');
-                    }
+setSelectedStore(store);
+});
 
-                    const parsedStores = parseGoogleSheetsData(data.values);
-                    console.log('🏪 Parsed stores:', parsedStores);
-                    console.log('📊 Total stores found:', parsedStores.length);
-                    
-                    setStores(parsedStores);
-                    setLastUpdated(new Date());
-                    
-                    // Don't add markers here - let the useEffect handle it based on filteredStores
-                    
-                } catch (err) {
-                    console.error('❌ Error fetching data:', err);
-                    setError(err.message);
-                } finally {
-                    setLoading(false);
-                }
-            };
+markers.push(marker);
+});
 
-            const parseGoogleSheetsData = (values) => {
-                const stores = [];
-                
-                // Find the header row
-                let headerRowIndex = -1;
-                for (let i = 0; i < Math.min(3, values.length); i++) {
-                    if (values[i] && values[i][0] && values[i][0].toString().toLowerCase().includes('store owner')) {
-                        headerRowIndex = i;
-                        break;
-                    }
-                }
-                
-                if (headerRowIndex === -1) {
-                    console.log('❌ No header row found');
-                    return stores;
-                }
-                
-                console.log('📋 Found header row at index:', headerRowIndex);
-                console.log('📋 Headers:', values[headerRowIndex]);
-                
-                // Process data rows (skip header row)
-                const dataStartIndex = headerRowIndex + 1;
-                
-                // Debug: Check first 5 rows to understand data structure
-                console.log('🔍 Checking first 5 data rows:');
-                for (let i = dataStartIndex; i < Math.min(dataStartIndex + 5, values.length); i++) {
-                    const row = values[i];
-                    console.log(`Row ${i}:`, {
-                        storeOwner: row[0],
-                        storeStatus: row[1],
-                        storeNumber: row[3],
-                        storeName: row[4],
-                        address: row[5],
-                        city: row[6],
-                        state: row[7],
-                        zip: row[8],
-                        lat: row[13],
-                        lng: row[14]
-                    });
-                }
-                
-                // Count different status values
-                const statusCounts = {};
-                let totalRowsProcessed = 0;
-                let rowsWithCoordinates = 0;
-                let sunlyOpenStoresFound = 0;
-                
-                // Process all data rows - FILTER FOR SUNLY + OPEN STATUS ONLY
-                for (let i = dataStartIndex; i < values.length; i++) {
-                    const row = values[i];
-                    totalRowsProcessed++;
-                    
-                    if (row.length >= 15) {
-                        const storeOwner = row[0]?.toString().trim().toLowerCase() || '';
-                        const rawStatus = row[1]?.toString() || '';
-                        const status = rawStatus.trim().toLowerCase();
-                        
-                        // Count all status values
-                        const statusKey = `${storeOwner}-${status}`;
-                        statusCounts[statusKey] = (statusCounts[statusKey] || 0) + 1;
-                        
-                        // Column N (13) - Latitude, Column O (14) - Longitude
-                        const lat = parseFloat(row[13]);
-                        const lng = parseFloat(row[14]);
-                        
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            rowsWithCoordinates++;
-                        }
-                        
-                        // ONLY INCLUDE SUNLY + OPEN STORES
-                        if (storeOwner === 'sunly' && status === 'open') {
-                            sunlyOpenStoresFound++;
-                            
-                            if (!isNaN(lat) && !isNaN(lng)) {
-                                console.log(`✅ Valid Sunly Open store:`, {
-                                    name: row[4]?.toString().trim(),
-                                    lat: lat,
-                                    lng: lng
-                                });
-                                const store = {
-                                    status: 'Open',
-                                    owner: row[0]?.toString().trim() || '',        // Column A - Store Owner
-                                    storeNumber: row[3]?.toString().trim() || '',  // Column D - Store No.
-                                    storeName: row[4]?.toString().trim() || '',    // Column E - Store Name
-                                    address: row[5]?.toString().trim() || '',      // Column F - Street
-                                    city: row[6]?.toString().trim() || '',         // Column G - City
-                                    state: row[7]?.toString().trim() || '',        // Column H - State
-                                    zip: row[8]?.toString().trim() || '',          // Column I - Zip_Code
-                                    latitude: lat,
-                                    longitude: lng,
-                                    requestFormUrl: row[17]?.toString().trim() || '' // Column R - request_form_url
-                                };
-                                stores.push(store);
-                            } else {
-                                console.log('❌ Sunly Open store without valid coordinates:', {
-                                    storeName: row[4],
-                                    lat: row[13],
-                                    lng: row[14]
-                                });
-                            }
-                        }
-                    }
-                }
-                
-                console.log('📊 Data processing summary:');
-                console.log('- Total rows processed:', totalRowsProcessed);
-                console.log('- Rows with coordinates:', rowsWithCoordinates);
-                console.log('- Sunly Open stores found:', sunlyOpenStoresFound);
-                console.log('- Status counts:', statusCounts);
-                console.log('- Final stores for map:', stores.length);
-                
-                return stores;
-            };
+console.log('🎯 Total markers created:', markers.length);
 
-            // Initialize map when Google Maps API loads
-            useEffect(() => {
-                let attempts = 0;
-                const maxAttempts = 100;
+// Fit map to show all open stores
+if (markers.length > 0) {
+const bounds = new window.google.maps.LatLngBounds();
+markers.forEach(marker => bounds.extend(marker.getPosition()));
 
-                const checkGoogleMaps = () => {
-                    attempts++;
-                    console.log(`🔍 Attempt ${attempts}: Checking for Google Maps...`);
-                    
-                    if (window.google?.maps?.Map && mapRef.current) {
-                        console.log('✅ Google Maps found! Initializing...');
-                        const success = initializeMap();
-                        if (success) {
-                            console.log('✅ Map initialized successfully!');
-                            return;
-                        }
-                    }
-                    
-                    if (attempts < maxAttempts) {
-                        setTimeout(checkGoogleMaps, 200);
-                    } else {
-                        console.error('❌ Failed to load Google Maps after', maxAttempts, 'attempts');
-                        setError('Failed to load Google Maps. Please refresh the page.');
-                    }
-                };
-                
-                checkGoogleMaps();
-            }, []);
+map.fitBounds(bounds);
+console.log('📐 Map bounds fitted to markers');
+} else {
+console.log('❌ No markers to fit bounds to');
+}
+};
 
-            // Update markers when filteredStores changes
-            useEffect(() => {
-                console.log('🔧 Markers useEffect triggered');
-                console.log('🔧 mapLoaded:', mapLoaded);
-                console.log('🔧 filteredStores.length:', filteredStores.length);
-                
-                if (mapLoaded && filteredStores.length > 0 && map && window.google) {
-                    console.log('🔧 Calling addMarkersToMap with filtered stores...');
-                    addMarkersToMap(filteredStores);
-                    
-                    // Clear selected store if it's not in filtered results
-                    if (selectedStore && !filteredStores.find(s => s.storeNumber === selectedStore.storeNumber)) {
-                        console.log('🔧 Clearing selected store - not in filtered results');
-                        setSelectedStore(null);
-                    }
-                } else {
-                    console.log('❌ Not calling addMarkersToMap - conditions not met');
-                }
-            }, [mapLoaded, filteredStores, map]);
+const fetchFromGoogleSheets = async () => {
+try {
+setLoading(true);
+setError('');
 
-            // Initial load and auto-refresh
-            useEffect(() => {
-                console.log('🚀 Initial load starting...');
-                fetchFromGoogleSheets();
-                if (CONFIG.REFRESH_MINUTES > 0) {
-                    const interval = setInterval(fetchFromGoogleSheets, CONFIG.REFRESH_MINUTES * 60 * 1000);
-                    return () => clearInterval(interval);
-                }
-            }, []);
+const encodedSheetName = encodeURIComponent(CONFIG.SHEET_NAME);
+let url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${encodedSheetName}?key=${CONFIG.API_KEY}`;
 
-            const filteredStores = useMemo(() => {
-                let filtered = stores;
-                
-                // Apply search filter
-                if (searchTerm.trim()) {
-                    filtered = filtered.filter(store => {
-                        const searchLower = searchTerm.toLowerCase();
-                        return (
-                            (store.storeName || '').toLowerCase().includes(searchLower) ||
-                            (store.city || '').toLowerCase().includes(searchLower) ||
-                            (store.state || '').toLowerCase().includes(searchLower) ||
-                            (store.storeNumber || '').toLowerCase().includes(searchLower)
-                        );
-                    });
-                }
-                
-                // Apply state filter
-                if (stateFilter !== 'all') {
-                    filtered = filtered.filter(store => store.state === stateFilter);
-                }
-                
-                console.log('🔍 Filtered stores:', {
-                    total: stores.length,
-                    afterSearch: filtered.length,
-                    searchTerm,
-                    stateFilter
-                });
-                
-                return filtered;
-            }, [stores, searchTerm, stateFilter]);
+console.log('🔍 Fetching from URL:', url);
 
-            const uniqueStates = [...new Set(stores.map(store => store.state))].filter(state => state && state.trim() !== '').sort();
+let response = await fetch(url);
 
-            return (
-                <div className="w-full h-screen bg-gray-50 flex flex-col">
-                    {/* Header */}
-                    <div className="bg-white shadow-sm border-b px-4 md:px-6 py-1.5">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 mb-1.5">
-                            <h1 className="text-xl md:text-2xl font-bold text-gray-900">Lowe's Open Stores Map</h1>
-                            <button
-                                onClick={fetchFromGoogleSheets}
-                                disabled={loading}
-                                className="px-3 md:px-4 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 text-sm md:text-base touch-manipulation"
-                            >
-                                {loading ? <Loader className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
-                                <span className="hidden sm:inline">Refresh Data</span>
-                                <span className="sm:hidden">Refresh</span>
-                            </button>
-                        </div>
+// If that fails, try without sheet name (gets first sheet)
+if (!response.ok) {
+console.log('❌ First attempt failed, trying without sheet name...');
+url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/A:Z?key=${CONFIG.API_KEY}`;
+console.log('🔍 Trying URL:', url);
+response = await fetch(url);
+}
 
-                        {error && (
-                            <div className="mb-1.5 p-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-                                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                                <span className="text-red-700 text-base">{error}</span>
-                            </div>
-                        )}
+if (!response.ok) {
+const errorData = await response.json();
+console.log('❌ API Error:', errorData);
+throw new Error(`Google Sheets API error: ${response.status} - ${errorData.error?.message || response.statusText}`);
+}
 
-                        {lastUpdated && (
-                            <div className="mb-1.5 text-xs md:text-sm text-gray-600">
-                                Last updated: {lastUpdated.toLocaleString()}
-                                {CONFIG.REFRESH_MINUTES > 0 && (
-                                    <span className="hidden sm:inline"> • Auto-refresh every {CONFIG.REFRESH_MINUTES} minutes</span>
-                                )}
-                            </div>
-                        )}
+const data = await response.json();
+console.log('📊 Raw data received:', data);
 
-                        {/* Open Stores Summary */}
-                        <div style={{marginBottom: '0.375rem'}}>
-                            <div style={{
-                                padding: '0.375rem 0.5rem',
-                                borderRadius: '0.375rem',
-                                border: '1px solid #2C5134',
-                                background: 'linear-gradient(135deg, #E8F5E8 0%, #D4EDD4 100%)',
-                                display: 'inline-block'
-                            }}>
-                                <div style={{display: 'flex', alignItems: 'center', gap: '0.375rem'}}>
-                                    <div style={{width: '0.625rem', height: '0.625rem', borderRadius: '50%', backgroundColor: '#2C5134'}}></div>
-                                    <span style={{color: '#2C5134', fontWeight: '500', fontSize: '0.8125rem'}}>Open Stores</span>
-                                    <span style={{fontSize: '1.125rem', fontWeight: 'bold', marginLeft: '0.25rem', color: '#2C5134'}}>{filteredStores.length}</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        {/* Filters */}
-                        <div className="flex flex-col lg:flex-row gap-1.5 md:gap-2 items-stretch lg:items-center">
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                                <Search className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                                <input
-                                    type="text"
-                                    placeholder="Search stores, cities..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="flex-1 px-2 py-1.5 border rounded-lg text-sm touch-manipulation"
-                                />
-                            </div>
-                            
-                            <div className="flex flex-wrap lg:flex-nowrap items-center gap-2">
-                                <select
-                                    value={stateFilter}
-                                    onChange={(e) => setStateFilter(e.target.value)}
-                                    className="px-2 py-1.5 border rounded-lg text-sm touch-manipulation min-w-0"
-                                >
-                                    <option value="all">All States ({stores.length})</option>
-                                    {uniqueStates.map(state => {
-                                        const stateCount = stores.filter(store => store.state === state).length;
-                                        return (
-                                            <option key={state} value={state}>
-                                                {state || 'Unknown'} ({stateCount})
-                                            </option>
-                                        );
-                                    })}
-                                </select>
-                                
-                                <div className="text-sm text-gray-600 whitespace-nowrap font-medium">
-                                    Showing {filteredStores.length} of {stores.length} open
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+if (!data.values || data.values.length === 0) {
+throw new Error('No data found in the specified sheet');
+}
 
-                    <div className="flex-1 flex">
-                        {/* Google Map */}
-                        <div className="flex-1 relative">
-                            <div ref={mapRef} id="map" className="w-full h-full"></div>
-                            
-                            {loading && (
-                                <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-10">
-                                    <div className="flex flex-col items-center gap-4 p-6 bg-white rounded-xl shadow-lg border">
-                                        <Loader className="w-8 h-8 animate-spin text-blue-600" />
+const parsedStores = parseGoogleSheetsData(data.values);
+console.log('🏪 Parsed stores:', parsedStores);
+console.log('📊 Total stores found:', parsedStores.length);
+
+setStores(parsedStores);
+setLastUpdated(new Date());
+
+// Add markers to map - try immediately
+console.log('📍 About to add markers, mapLoaded:', mapLoaded);
+console.log('📍 map object exists:', !!map);
+console.log('📍 window.google exists:', !!window.google);
+
+// Try adding markers with a small delay to ensure map is ready
+setTimeout(() => {
+console.log('📍 Delayed marker add - map:', !!map, 'google:', !!window.google);
+if (map && window.google) {
+addMarkersToMap(parsedStores);
+} else {
+console.error('❌ Map or Google not ready after delay');
+}
+}, 1000);
+
+} catch (err) {
+console.error('❌ Error fetching data:', err);
+setError(err.message);
+} finally {
+setLoading(false);
+}
+};
+
+const parseGoogleSheetsData = (values) => {
+const stores = [];
+
+// Find the header row
+let headerRowIndex = -1;
+for (let i = 0; i < Math.min(3, values.length); i++) {
+if (values[i] && values[i][0] && values[i][0].toString().toLowerCase().includes('store owner')) {
+headerRowIndex = i;
+break;
+}
+}
+
+if (headerRowIndex === -1) {
+console.log('❌ No header row found');
+return stores;
+}
+
+console.log('📋 Found header row at index:', headerRowIndex);
+console.log('📋 Headers:', values[headerRowIndex]);
+
+// Process data rows (skip header row)
+const dataStartIndex = headerRowIndex + 1;
+
+// Debug: Check first 5 rows to understand data structure
+console.log('🔍 Checking first 5 data rows:');
+for (let i = dataStartIndex; i < Math.min(dataStartIndex + 5, values.length); i++) {
+const row = values[i];
+console.log(`Row ${i}:`, {
+storeOwner: row[0],
+storeStatus: row[1],
+storeNumber: row[3],
+storeName: row[4],
+address: row[5],
+city: row[6],
+state: row[7],
+zip: row[8],
+lat: row[13],
+lng: row[14]
+});
+}
+
+// Count different status values
+const statusCounts = {};
+let totalRowsProcessed = 0;
+let rowsWithCoordinates = 0;
+let sunlyOpenStoresFound = 0;
+
+// Process all data rows - FILTER FOR SUNLY + OPEN STATUS ONLY
+for (let i = dataStartIndex; i < values.length; i++) {
+const row = values[i];
+totalRowsProcessed++;
+
+if (row.length >= 15) {
+const storeOwner = row[0]?.toString().trim().toLowerCase() || '';
+const rawStatus = row[1]?.toString() || '';
+const status = rawStatus.trim().toLowerCase();
+
+// Count all status values
+const statusKey = `${storeOwner}-${status}`;
+statusCounts[statusKey] = (statusCounts[statusKey] || 0) + 1;
+
+// Column N (13) - Latitude, Column O (14) - Longitude
+const lat = parseFloat(row[13]);
+const lng = parseFloat(row[14]);
+
+if (!isNaN(lat) && !isNaN(lng)) {
+rowsWithCoordinates++;
+}
+
+// ONLY INCLUDE SUNLY + OPEN STORES
+if (storeOwner === 'sunly' && status === 'open') {
+sunlyOpenStoresFound++;
+
+if (!isNaN(lat) && !isNaN(lng)) {
+console.log(`✅ Valid Sunly Open store:`, {
+name: row[4]?.toString().trim(),
+lat: lat,
+lng: lng
+});
+const store = {
+status: 'Open',
+owner: row[0]?.toString().trim() || '',        // Column A - Store Owner
+storeNumber: row[3]?.toString().trim() || '',  // Column D - Store No.
+storeName: row[4]?.toString().trim() || '',    // Column E - Store Name
+address: row[5]?.toString().trim() || '',      // Column F - Street
+city: row[6]?.toString().trim() || '',         // Column G - City
+state: row[7]?.toString().trim() || '',        // Column H - State
+zip: row[8]?.toString().trim() || '',          // Column I - Zip_Code
+latitude: lat,
+longitude: lng,
+requestFormUrl: row[17]?.toString().trim() || '' // Column R - request_form_url
+};
+stores.push(store);
+} else {
+console.log('❌ Sunly Open store without valid coordinates:', {
+storeName: row[4],
+lat: row[13],
+lng: row[14]
+});
+}
+}
+}
+}
+
+console.log('📊 Data processing summary:');
+console.log('- Total rows processed:', totalRowsProcessed);
+console.log('- Rows with coordinates:', rowsWithCoordinates);
+console.log('- Sunly Open stores found:', sunlyOpenStoresFound);
+console.log('- Status counts:', statusCounts);
+console.log('- Final stores for map:', stores.length);
+
+return stores;
+};
+
+// Initialize map when Google Maps API loads
+useEffect(() => {
+let attempts = 0;
+const maxAttempts = 100;
+
+const checkGoogleMaps = () => {
+attempts++;
+console.log(`🔍 Attempt ${attempts}: Checking for Google Maps...`);
+
+if (window.google?.maps?.Map && mapRef.current) {
+console.log('✅ Google Maps found! Initializing...');
+const success = initializeMap();
+if (success) {
+console.log('✅ Map initialized successfully!');
+return;
+}
+}
+
+if (attempts < maxAttempts) {
+setTimeout(checkGoogleMaps, 200);
+} else {
+console.error('❌ Failed to load Google Maps after', maxAttempts, 'attempts');
+setError('Failed to load Google Maps. Please refresh the page.');
+}
+};
+
+checkGoogleMaps();
+}, []);
+
+// Update markers when filteredStores changes
+useEffect(() => {
+console.log('🔧 Markers useEffect triggered');
+console.log('🔧 mapLoaded:', mapLoaded);
+console.log('🔧 filteredStores.length:', filteredStores.length);
+
+if (mapLoaded && filteredStores.length > 0) {
+console.log('🔧 Calling addMarkersToMap...');
+addMarkersToMap(filteredStores);
+} else {
+console.log('❌ Not calling addMarkersToMap - conditions not met');
+}
+}, [mapLoaded, filteredStores]);
+
+// Initial load and auto-refresh
+useEffect(() => {
+console.log('🚀 Initial load starting...');
+fetchFromGoogleSheets();
+if (CONFIG.REFRESH_MINUTES > 0) {
+const interval = setInterval(fetchFromGoogleSheets, CONFIG.REFRESH_MINUTES * 60 * 1000);
+return () => clearInterval(interval);
+}
+}, []);
+
+const filteredStores = useMemo(() => {
+let filtered = stores;
+
+// Apply search filter
+if (searchTerm.trim()) {
+filtered = filtered.filter(store => {
+const searchLower = searchTerm.toLowerCase();
+return (
+(store.storeName || '').toLowerCase().includes(searchLower) ||
+(store.city || '').toLowerCase().includes(searchLower) ||
+(store.state || '').toLowerCase().includes(searchLower) ||
+(store.storeNumber || '').toLowerCase().includes(searchLower)
+);
+});
+}
+
+// Apply state filter
+if (stateFilter !== 'all') {
+filtered = filtered.filter(store => store.state === stateFilter);
+}
+
+console.log('🔍 Filtered stores:', {
+total: stores.length,
+afterSearch: filtered.length,
+searchTerm,
+stateFilter
+});
+
+return filtered;
+}, [stores, searchTerm, stateFilter]);
+
+const uniqueStates = [...new Set(stores.map(store => store.state))].filter(state => state && state.trim() !== '').sort();
+
+return (
+<div className="w-full h-screen bg-gray-50 flex flex-col">
+{/* Header */}
+<div className="bg-white shadow-sm border-b px-4 md:px-6 py-1.5">
+<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 mb-1.5">
+<h1 className="text-xl md:text-2xl font-bold text-gray-900">Lowe's Open Stores Map</h1>
+<button
+onClick={fetchFromGoogleSheets}
+disabled={loading}
+className="px-3 md:px-4 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 text-sm md:text-base touch-manipulation"
+>
+{loading ? <Loader className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
+<span className="hidden sm:inline">Refresh Data</span>
+<span className="sm:hidden">Refresh</span>
+</button>
+</div>
+
+{error && (
+<div className="mb-1.5 p-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+<AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+<span className="text-red-700 text-base">{error}</span>
+</div>
+)}
+
+{lastUpdated && (
+<div className="mb-1.5 text-xs md:text-sm text-gray-600">
+Last updated: {lastUpdated.toLocaleString()}
+{CONFIG.REFRESH_MINUTES > 0 && (
+<span className="hidden sm:inline"> • Auto-refresh every {CONFIG.REFRESH_MINUTES} minutes</span>
+)}
+</div>
+)}
+
+{/* Open Stores Summary */}
+<div style={{marginBottom: '0.375rem'}}>
+<div style={{
+padding: '0.375rem 0.5rem',
+borderRadius: '0.375rem',
+border: '1px solid #2C5134',
+background: 'linear-gradient(135deg, #E8F5E8 0%, #D4EDD4 100%)',
+display: 'inline-block'
+}}>
+<div style={{display: 'flex', alignItems: 'center', gap: '0.375rem'}}>
+<div style={{width: '0.625rem', height: '0.625rem', borderRadius: '50%', backgroundColor: '#2C5134'}}></div>
+<span style={{color: '#2C5134', fontWeight: '500', fontSize: '0.8125rem'}}>Open Stores</span>
+<span style={{fontSize: '1.125rem', fontWeight: 'bold', marginLeft: '0.25rem', color: '#2C5134'}}>{filteredStores.length}</span>
+</div>
+</div>
+</div>
+
+{/* Filters */}
+<div className="flex flex-col lg:flex-row gap-1.5 md:gap-2 items-stretch lg:items-center">
+<div className="flex items-center gap-2 flex-1 min-w-0">
+<Search className="w-4 h-4 text-gray-500 flex-shrink-0" />
+<input
+type="text"
+placeholder="Search stores, cities..."
+value={searchTerm}
+onChange={(e) => setSearchTerm(e.target.value)}
+className="flex-1 px-2 py-1.5 border rounded-lg text-sm touch-manipulation"
+/>
+</div>
+
+<div className="flex flex-wrap lg:flex-nowrap items-center gap-2">
+<select
+value={stateFilter}
+onChange={(e) => setStateFilter(e.target.value)}
+className="px-2 py-1.5 border rounded-lg text-sm touch-manipulation min-w-0"
+>
+<option value="all">All States ({stores.length})</option>
+{uniqueStates.map(state => {
+const stateCount = stores.filter(store => store.state === state).length;
+return (
+<option key={state} value={state}>
+{state || 'Unknown'} ({stateCount})
+</option>
+);
+})}
+</select>
+
+<div className="text-sm text-gray-600 whitespace-nowrap font-medium">
+Showing {filteredStores.length} of {stores.length} open
+</div>
+</div>
+</div>
+</div>
+
+<div className="flex-1 flex">
+{/* Google Map */}
+<div className="flex-1 relative">
+<div ref={mapRef} id="map" className="w-full h-full"></div>
+
+{loading && (
+<div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-10">
+<div className="flex flex-col items-center gap-4 p-6 bg-white rounded-xl shadow-lg border">
+<Loader className="w-8 h-8 animate-spin text-blue-600" />
+                                        <span className="text-gray-700 font-medium">Loading Sunly open stores...</span>
+                                        <div className="text-sm text-gray-500">Showing only Sunly-owned open locations</div>
                                         <span className="text-gray-700 font-medium">Loading open stores...</span>
                                         <div className="text-sm text-gray-500">Ready for reservation</div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                        
-                        {/* Store Details Panel */}
-                        {selectedStore && (
-                            <div className="w-full sm:w-72 md:w-80 bg-white shadow-lg border-l overflow-y-auto">
-                                <div className="p-4">
-                                    <div className="flex items-start justify-between mb-3">
-                                        <div className="flex-1 min-w-0">
-                                            <h2 className="text-base font-bold leading-tight">{selectedStore.storeName}</h2>
-                                        </div>
-                                        <button
-                                            onClick={() => setSelectedStore(null)}
-                                            className="text-gray-400 hover:text-gray-600 text-xl ml-3 p-1 hover:bg-gray-100 rounded flex-shrink-0"
-                                            title="Close panel"
-                                        >
-                                            ×
-                                        </button>
-                                    </div>
-                                    
-                                    <div className="space-y-4">
-                                        <div>
-                                            <div className="text-xs font-medium text-gray-700 mb-2">Status</div>
-                                            <div className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-100" style={{color: '#2C5134'}}>
-                                                Open
-                                            </div>
-                                        </div>
-                                        
-                                        <div>
-                                            <div className="text-xs font-medium text-gray-700 mb-2">Store Number</div>
-                                            <div className="text-sm text-gray-900">{selectedStore.storeNumber}</div>
-                                        </div>
-                                        
-                                        <div>
-                                            <div className="text-xs font-medium text-gray-700 mb-2">Address</div>
-                                            <div className="text-sm text-gray-900 leading-relaxed">
-                                                {selectedStore.address}<br/>
-                                                {selectedStore.city}, {selectedStore.state} {selectedStore.zip}
-                                            </div>
-                                        </div>
+</div>
+</div>
+)}
+</div>
 
-                                        {/* RESERVE BUTTON */}
-                                        <div className="pt-4 border-t">
-                                            <a
-                                                href={selectedStore.requestFormUrl || CONFIG.RESERVE_URL}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="w-full text-white px-4 py-3 rounded-lg font-medium text-center block transition-colors text-sm hover:shadow-lg"
-                                                style={{backgroundColor: '#2C5134'}}
-                                                onMouseEnter={(e) => e.target.style.backgroundColor = '#1e3a26'}
-                                                onMouseLeave={(e) => e.target.style.backgroundColor = '#2C5134'}
-                                            >
-                                                Reserve This Store
-                                            </a>
-                                            {!selectedStore.requestFormUrl && (
-                                                <div className="text-xs text-gray-500 text-center mt-2">
-                                                    Using global form
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        };
+{/* Store Details Panel */}
+{selectedStore && (
+<div className="w-full sm:w-72 md:w-80 bg-white shadow-lg border-l overflow-y-auto">
+<div className="p-4">
+<div className="flex items-start justify-between mb-3">
+<div className="flex-1 min-w-0">
+<h2 className="text-base font-bold leading-tight">{selectedStore.storeName}</h2>
+</div>
+<button
+onClick={() => setSelectedStore(null)}
+className="text-gray-400 hover:text-gray-600 text-xl ml-3 p-1 hover:bg-gray-100 rounded flex-shrink-0"
+title="Close panel"
+>
+×
+</button>
+</div>
 
-        ReactDOM.render(<LowesOpenStoresMap />, document.getElementById('root'));
-    </script>
+<div className="space-y-4">
+<div>
+<div className="text-xs font-medium text-gray-700 mb-2">Status</div>
+<div className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-100" style={{color: '#2C5134'}}>
+Open
+</div>
+</div>
+
+<div>
+<div className="text-xs font-medium text-gray-700 mb-2">Store Number</div>
+<div className="text-sm text-gray-900">{selectedStore.storeNumber}</div>
+</div>
+
+<div>
+<div className="text-xs font-medium text-gray-700 mb-2">Address</div>
+<div className="text-sm text-gray-900 leading-relaxed">
+{selectedStore.address}<br/>
+{selectedStore.city}, {selectedStore.state} {selectedStore.zip}
+</div>
+</div>
+
+{/* RESERVE BUTTON */}
+<div className="pt-4 border-t">
+<a
+href={selectedStore.requestFormUrl || CONFIG.RESERVE_URL}
+target="_blank"
+rel="noopener noreferrer"
+className="w-full text-white px-4 py-3 rounded-lg font-medium text-center block transition-colors text-sm hover:shadow-lg"
+style={{backgroundColor: '#2C5134'}}
+onMouseEnter={(e) => e.target.style.backgroundColor = '#1e3a26'}
+onMouseLeave={(e) => e.target.style.backgroundColor = '#2C5134'}
+>
+Reserve This Store
+</a>
+{!selectedStore.requestFormUrl && (
+<div className="text-xs text-gray-500 text-center mt-2">
+Using global form
+</div>
+)}
+</div>
+</div>
+</div>
+</div>
+)}
+</div>
+</div>
+);
+};
+
+ReactDOM.render(<LowesOpenStoresMap />, document.getElementById('root'));
+</script>
 </body>
 </html>
